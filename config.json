@@ -1,0 +1,10 @@
+{
+  "width": 150,
+  "charset": "detailed",
+  "color_theme": "white",
+  "figlet_font": "colossal",
+  "effects_enabled": true,
+  "typing_speed": 0.018,
+  "animation_speed": 0.04,
+  "matrix_duration": 3.5
+}

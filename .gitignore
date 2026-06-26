@@ -1,1 +1,9 @@
-/venv
+venv/
+__pycache__/
+*.pyc
+*.pyo
+ascii_cache/
+exports/
+scores.json
+history.json
+favorites.json
