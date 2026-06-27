@@ -5,5 +5,6 @@ __pycache__/
 ascii_cache/
 exports/
 scores.json
+config.json
 history.json
 favorites.json
