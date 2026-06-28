@@ -13,7 +13,7 @@ from cache import cache_stats, clear_cache
 from effects import (
     console, reveal_ascii_art, typing_effect,
     show_pickle_rick, show_wubba_lubba, show_portal_secret,
-    show_get_schwifty, show_szechuan_sauce, _sleep,
+    show_get_schwifty, show_szechuan_sauce, show_rickroll, _sleep,
     matrix_rain_reveal,
 )
 from export import export_html, export_txt
@@ -34,24 +34,14 @@ from explore import mode_explore
 from utils import clear_screen
 
 
-# ── Easter egg functions ──────────────────────────────────────────────────────
-
-def _rickroll() -> None:
-    color = settings.color_theme
-    typing_effect("  > Never gonna give you up...", color, delay=0.04)
-    typing_effect("  > Never gonna let you down...", color, delay=0.04)
-    typing_effect("  > Never gonna run around and desert you.", color, delay=0.04)
-    _sleep(1.5)
-
-
-# ── Easter egg keyword map (defined AFTER all functions it references) ────────
+# ── Easter egg keyword map ────────────────────────────────────────────────────
 _EASTER_EGGS = {
     "PICKLE RICK":          show_pickle_rick,
     "WUBBA LUBBA DUB DUB":  show_wubba_lubba,
     "PORTAL":               show_portal_secret,
     "GET SCHWIFTY":         show_get_schwifty,
     "SZECHUAN":             show_szechuan_sauce,
-    "RICKROLL":             _rickroll,
+    "EVIL MORTY":           show_rickroll,
 }
 
 

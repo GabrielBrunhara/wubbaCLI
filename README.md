@@ -87,6 +87,7 @@ Boot style can be changed in **Settings → B**.
 │    G   Games          Mini-games and trivia             │
 │    F   Favorites      Your bookmarked characters        │
 │    H   History        Recently viewed characters        │
+│    X   Explore        Discover locations, dimensions    │
 │    S   Settings       Configure appearance              │
 │    Q   Quit           Wubba lubba dub dub               │
 │                                                         │
@@ -110,6 +111,20 @@ Search by name. One result: opens directly. Multiple results: numbered table wit
 
 ### Episode
 Picks a random episode, displays its code, air date, and character list. Open any character from the list by number.
+
+### Explore
+Six universe-wide modes accessible from the `X` submenu:
+
+| Key | Mode | Description |
+|---|---|---|
+| **L** | Location Explorer | Browse all locations; filter by name, type, or dimension; open any resident |
+| **D** | Dimension Atlas | Locations grouped by dimension, sorted by population |
+| **N** | Universe Census | Full multiverse stats — species, gender, status breakdowns |
+| **S** | Season Breakdown | Episodes by season; enter any episode to browse its cast one by one |
+| **W** | Most Wanted | Characters ranked by episode appearances |
+| **K** | Dead Roster | All dead characters, paginated and alphabetically sorted |
+
+From any character viewer (including Explore modes), press `S` to open the full **Character Stats** screen — episode timeline grid, appearance count, first/last seen, and season heatmap.
 
 ### Matrix Reveal
 Full-screen matrix-style character rain. A random character's ASCII art gradually emerges from the rain. Press Enter to open the full Character Viewer.
@@ -162,14 +177,14 @@ Settings are persisted to `config.json`. The title and portal logo in the boot a
 
 Type any of the following terms at the search prompt:
 
-```
-pickle rick
-wubba lubba dub dub
-portal
-get schwifty
-szechuan
-rickroll
-```
+| Trigger | What happens |
+|---|---|
+| `pickle rick` | Mutagenic sequence progress bar → ASCII Pickle Rick reveal |
+| `wubba lubba dub dub` | Each word flashes full-screen in figlet → Birdperson translation |
+| `portal` | Interdimensional portal opens and spins; keypress closes it with animation |
+| `get schwifty` | Music plays in the background while a note-wave visualizer runs; figlet reveal after audio ends |
+| `szechuan` | McDimension's terminal scans 826 dimensions for McNugget sauce — all out of stock |
+| `evil morty` | Evil Morty seizes the terminal — infinite red music visualizer plays the Evil Morty theme; press any key to escape |
 
 ---
 
@@ -181,12 +196,13 @@ wubba-cli/
 ├── main.py          # Entry point, CLI flag parsing
 ├── menu.py          # Main loop and mode dispatch
 │
-├── api.py           # Rick and Morty API client
+├── api.py           # Rick and Morty API client (typed, cached, rate-limit backoff)
 ├── ascii_engine.py  # Image → ASCII conversion pipeline
 ├── cache.py         # Local image cache
 │
-├── effects.py       # Boot screen (epic/classic), matrix rain, typewriter
+├── effects.py       # Boot screen (epic/classic), matrix rain, Easter eggs
 ├── ui.py            # All Rich panels and prompts
+├── explore.py       # Explore mode — location, dimension, census, season, leaderboard
 ├── export.py        # TXT and HTML export
 │
 ├── settings.py      # Typed settings with persistence

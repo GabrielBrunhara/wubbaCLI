@@ -575,130 +575,414 @@ def reveal_ascii_art(
 
 # ── Easter egg visuals ────────────────────────────────────────────────────────
 
-PICKLE_RICK_ART = r"""
-         ___
-        /   \
-       | o o |   I turned myself into a PICKLE!
-        \___/    I'M PICKLE RIIIICK!!!
-       /|   |\
-      / |   | \
-     /  |   |  \
-    /   |___|   \
-"""
+_MUSIC_NOTES = "♩♪♫♬♭♮♯"
 
-WUBBA_LUBBA_ART = r"""
- __        __   _       _       _
- \ \      / /  | |__   | |__   | |  __ _
-  \ \ /\ / /   | '_ \  | '_ \  | | / _` |
-   \ V  V /    | |_) | | |_) | | || (_| |
-    \_/\_/     |_.__/  |_.__/  |_| \__,_|
-
-  _           _       _             _
- | |   _   _ | |__   | |__    __ _ | |
- | |  | | | || '_ \  | '_ \  / _` || |
- | |__| |_| || |_) | | |_) || (_| ||_|
- |_____\__,_||_.__/  |_.__/  \__,_|(_)
-
-  ____              _       _
- |  _ \  _   _  _ | |     | |
- | | | || | | || |_| |     | |
- | |_| || |_| ||  _  |  _  |_|
- |____/  \__,_||_| |_| (_) (_)
-"""
-
-SECRET_PORTAL_ART = r"""
-        ████████████████████████████
-      ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
-    ██░░░░   S E C R E T   M O D E  ░░░░██
-   ██░░░░  ┌─────────────────────┐  ░░░░██
-  ██░░░░   │  You found it.      │   ░░░░██
-  ██░░░░   │  Wubba lubba        │   ░░░░██
-  ██░░░░   │  dub dub, Morty!    │   ░░░░██
-  ██░░░░   └─────────────────────┘   ░░░░██
-   ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
-    ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██
-      ████████████████████████████████
+_PICKLE_ART = r"""
+      ╭───────────╮
+     ╭╯  ◉     ◉  ╰╮
+     │    ╰───╯    │
+     │   SANCHEZ   │
+     ╰──────┬──────╯
+            │
+      ══════╪══════
+            │
+      ══════╪══════
+            │
+      ══════╪══════
 """
 
 
 def show_pickle_rick() -> None:
+    os.system("cls" if os.name == "nt" else "clear")
     theme = settings.color_theme
-    console.print(
-        Panel(
-            f"[bold green]{PICKLE_RICK_ART}[/bold green]",
-            title="[bold yellow]🥒  SECRET ACTIVATED  🥒[/bold yellow]",
-            border_style=theme,
-        ),
-        justify="center",
-    )
-    _sleep(0.5)
-    typing_effect("  > Morty, I turned myself into a pickle!", "green", delay=0.03)
-    typing_effect("  > I'M PICKLE RIIIICK!", "yellow", delay=0.05)
-    _sleep(1.5)
+
+    stages = [
+        ("Analyzing C-137 DNA sequence",         theme,    1.1),
+        ("Injecting chlorophyll compound",        "green",  1.4),
+        ("Restructuring cellular matrix",         "cyan",   1.0),
+        ("Bypassing mitochondrial suppressors",   theme,    0.9),
+        ("Compressing vertebral architecture",    "green",  0.8),
+        ("TRANSFORMATION COMPLETE",               "yellow", 0.8),
+    ]
+    total_w = sum(s[2] for s in stages)
+
+    console.print()
+    console.print(Align.center(Panel(
+        "[bold yellow]  RICKINATOR v3.0 — MUTAGENIC SEQUENCE  [/bold yellow]",
+        border_style=theme, padding=(0, 4),
+    )))
+    console.print()
+
+    with Progress(
+        SpinnerColumn(style="bold green"),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(bar_width=38, style="dim green", complete_style="bold green"),
+        TextColumn("[bold green]{task.percentage:>3.0f}%"),
+        console=console,
+        transient=False,
+    ) as prog:
+        task = prog.add_task(stages[0][0], total=100)
+        for desc, color, weight in stages:
+            prog.update(task, description=f"[{color}]{desc}[/{color}]")
+            segment = (weight / total_w) * 100
+            steps = max(1, int(segment / 0.6))
+            for _ in range(steps):
+                time.sleep(0.018)
+                prog.advance(task, segment / steps)
+        prog.update(task, completed=100,
+                    description="[bold green]TRANSFORMATION COMPLETE[/bold green]")
+        time.sleep(0.4)
+
+    console.print()
+    for line in _PICKLE_ART.split("\n"):
+        console.print(f"  [bold green]{line}[/bold green]")
+        if settings.effects_enabled:
+            time.sleep(0.07)
+    console.print()
+    typing_effect("  > I turned myself into a pickle, Morty!", "green", delay=0.035)
+    typing_effect("  > Boom! Big reveal — I'M PICKLE RIIIICK!!!", "bold yellow", delay=0.055)
+    _sleep(2.0)
 
 
 def show_wubba_lubba() -> None:
     theme = settings.color_theme
-    console.print(
-        Panel(
-            f"[bold {theme}]{WUBBA_LUBBA_ART}[/bold {theme}]",
-            title=f"[bold yellow]IT MEANS I AM IN GREAT PAIN[/bold yellow]",
-            border_style=theme,
-        ),
-        justify="center",
-    )
-    _sleep(0.5)
-    typing_effect("  > In Bird Culture, this is considered a big deal.", "cyan", delay=0.025)
-    _sleep(1.5)
+    from pyfiglet import Figlet
+    fig = Figlet(font=settings.figlet_font)
+
+    words = [
+        ("WUBBA",   "bold cyan"),
+        ("LUBBA",   "bold yellow"),
+        ("DUB",     f"bold {theme}"),
+        ("DUB !!!", "bold white"),
+    ]
+    for word, style in words:
+        os.system("cls" if os.name == "nt" else "clear")
+        console.print()
+        console.print(Text(fig.renderText(word), style=style), justify="center")
+        time.sleep(0.28)
+
+    os.system("cls" if os.name == "nt" else "clear")
+    console.print()
+    console.print(Text(fig.renderText("WUBBA LUBBA"), style=f"bold {theme}"), justify="center")
+    console.print(Text(fig.renderText("DUB  DUB !!"), style="bold yellow"), justify="center")
+    console.print()
+    console.print(Align.center(Panel(
+        f"[dim {theme}]— Birdperson translation —[/dim {theme}]\n\n"
+        "[bold white]I am in great pain, please help me.[/bold white]",
+        border_style=theme, padding=(1, 6),
+    )))
+    _sleep(2.5)
 
 
 def show_portal_secret() -> None:
+    import shutil
+    import threading
     theme = settings.color_theme
+    cols, rows = shutil.get_terminal_size()
+    cx, cy = cols / 2.0, rows / 2.0
+    ASPECT  = 0.45
+    max_r   = min(rows * 0.38, cols * ASPECT * 0.40)
+    OPEN_DUR  = 1.2
+    CLOSE_DUR = 0.9
+
+    _SWIRL = " ·°˙∘○◎◉●"
+    _RING  = "░▒▓█"
+
+    phase       = "opening"
+    open_start  = time.time()
+    close_start = None
+
+    _key = threading.Event()
+
+    def _wait_key() -> None:
+        try:
+            import readchar as _rc
+            _rc.readchar()
+        except Exception:
+            pass
+        _key.set()
+
+    with Live(refresh_per_second=24, screen=True) as live:
+        while True:
+            now = time.time()
+            t   = now - open_start          # always-increasing for swirl animation
+
+            if phase == "opening":
+                cur_r = max_r * min(1.0, (t / OPEN_DUR) ** 0.6)
+                if t >= OPEN_DUR:
+                    phase = "spinning"
+                    threading.Thread(target=_wait_key, daemon=True).start()
+            elif phase == "spinning":
+                cur_r = max_r
+                if _key.is_set():
+                    phase       = "closing"
+                    close_start = now
+            else:
+                p     = now - close_start
+                cur_r = max_r * (max(0.0, 1.0 - p / CLOSE_DUR) ** 1.5)
+                if p >= CLOSE_DUR:
+                    break
+
+            lines = []
+            for row in range(rows - 2):
+                line = Text()
+                for col in range(cols):
+                    dx = (col - cx) * ASPECT
+                    dy = row - cy
+                    r  = math.sqrt(dx * dx + dy * dy)
+                    if cur_r < 1.0:
+                        line.append(" ")
+                        continue
+                    ang = math.atan2(dy, dx)
+                    rn  = r / cur_r
+                    if rn > 1.25:
+                        if random.random() < 0.003:
+                            line.append(random.choice("·˚✦"), style=f"dim {theme}")
+                        else:
+                            line.append(" ")
+                    elif rn > 1.0:
+                        sv = (math.sin(ang * 7 + t * 5) + 1) / 2
+                        if random.random() < sv * 0.25:
+                            line.append(random.choice("✦✧˚"), style=f"bold {theme}")
+                        else:
+                            line.append(" ")
+                    elif rn > 0.86:
+                        ra  = (ang - t * 1.6) % 6.283
+                        rv  = (math.sin(ra * 12 + t * 4) + 1) / 2
+                        idx = int(rv * (len(_RING) - 1))
+                        st  = f"bold {theme}" if rv > 0.70 else theme
+                        line.append(_RING[idx], style=st)
+                    else:
+                        sp = ang - t * 2.8 + rn * 14.0
+                        sw = (math.sin(sp * 2) + 1) / 2
+                        pu = (math.sin(t * 5.5 - rn * 9.0) + 1) / 2
+                        iv = (sw * 0.6 + pu * 0.4) * (rn ** 0.35)
+                        if iv < 0.07:
+                            line.append(" ")
+                        else:
+                            ch = _SWIRL[min(len(_SWIRL) - 1, int(iv * len(_SWIRL)))]
+                            if iv > 0.72:
+                                st = f"bold {theme}"
+                            elif iv > 0.45:
+                                st = theme
+                            else:
+                                st = f"dim {theme}"
+                            line.append(ch, style=st)
+                lines.append(line)
+
+            hint = Text(justify="center")
+            if phase == "spinning":
+                hint.append("  press any key to close the portal  ", style=f"dim {theme}")
+            lines.append(hint)
+
+            live.update(Group(*lines))
+            time.sleep(0.042)
+
     os.system("cls" if os.name == "nt" else "clear")
-    matrix_rain(duration=2.0)
-    console.print(
-        Panel(
-            f"[bold {theme}]{SECRET_PORTAL_ART}[/bold {theme}]",
-            title="[bold yellow]  ⌘  PORTAL GUN ACTIVATED  ⌘  [/bold yellow]",
-            border_style=theme,
-        ),
-        justify="center",
-    )
-    _sleep(0.4)
-    typing_effect("  > Sanchez-3000 interdimensional terminal unlocked.", theme, delay=0.02)
-    typing_effect("  > Nice one, genius.", "cyan", delay=0.02)
-    _sleep(2.0)
 
 
 def show_get_schwifty() -> None:
-    art = r"""
-  ██████╗ ███████╗████████╗    ███████╗ ██████╗██╗  ██╗██╗    ██╗██╗███████╗████████╗██╗   ██╗
- ██╔════╝ ██╔════╝╚══██╔══╝    ██╔════╝██╔════╝██║  ██║██║    ██║██║██╔════╝╚══██╔══╝╚██╗ ██╔╝
- ██║  ███╗█████╗     ██║       ███████╗██║     ███████║██║ █╗ ██║██║█████╗     ██║    ╚████╔╝
- ██║   ██║██╔══╝     ██║       ╚════██║██║     ██╔══██║██║███╗██║██║██╔══╝     ██║     ╚██╔╝
- ╚██████╔╝███████╗   ██║       ███████║╚██████╗██║  ██║╚███╔███╔╝██║██║        ██║      ██║
-  ╚═════╝ ╚══════╝   ╚═╝       ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝╚═╝        ╚═╝      ╚═╝
-    """
+    import shutil
+    import subprocess
+    from pathlib import Path
     theme = settings.color_theme
-    console.print(f"[bold {theme}]{art}[/bold {theme}]", justify="center")
-    typing_effect("  > Take off your pants and your panties...", "yellow", delay=0.03)
-    typing_effect("  > Shit on the floor...", "yellow", delay=0.03)
-    typing_effect("  > Time to GET SCHWIFTY in here!", "bold yellow", delay=0.05)
+    cols, rows = shutil.get_terminal_size()
+
+    music_path = Path(__file__).parent / "schwifty.mp3"
+    audio_proc = None
+    if music_path.exists():
+        try:
+            audio_proc = subprocess.Popen(
+                ["afplay", str(music_path)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            audio_proc = None
+
+    fallback_end = time.time() + 4.0
+
+    with Live(refresh_per_second=24, screen=True) as live:
+        start = time.time()
+        while True:
+            if audio_proc is not None:
+                if audio_proc.poll() is not None:
+                    break
+            elif time.time() > fallback_end:
+                break
+
+            elapsed = time.time() - start
+            lines = []
+            for row in range(rows - 1):
+                line = Text()
+                for col in range(cols):
+                    w1 = math.sin(col * 0.25 + elapsed * 6.0)
+                    w2 = math.sin(col * 0.10 + elapsed * 3.5 + row * 0.4)
+                    iv = (w1 + w2) / 2
+                    if iv > 0.55 and random.random() < 0.38:
+                        ch = _MUSIC_NOTES[int(abs(iv * len(_MUSIC_NOTES))) % len(_MUSIC_NOTES)]
+                        if iv > 0.85:
+                            line.append(ch, style="bold yellow")
+                        elif iv > 0.70:
+                            line.append(ch, style=f"bold {theme}")
+                        else:
+                            line.append(ch, style=theme)
+                    else:
+                        line.append(" ")
+                lines.append(line)
+            live.update(Group(*lines))
+            time.sleep(0.042)
+
+    os.system("cls" if os.name == "nt" else "clear")
+    from pyfiglet import Figlet
+    try:
+        fig = Figlet(font="doom")
+        # sanity-check width — if "GET" renders wider than 80% of terminal, fall back
+        if max(len(l) for l in fig.renderText("GET").split("\n")) > int(cols * 0.8):
+            raise ValueError
+    except Exception:
+        fig = Figlet(font="big")
+    console.print()
+    console.print(Text(fig.renderText("GET"), style=f"bold {theme}"), justify="center")
+    console.print(Text(fig.renderText("SCHWIFTY"), style="bold yellow"), justify="center")
+    console.print()
+    typing_effect("  ♪  Rick Sanchez performing live — Dimension C-137  ♪", "yellow", delay=0.025)
+    typing_effect("  ♫  Earth saved via interdimensional anthem  ♫", f"dim {theme}", delay=0.020)
     _sleep(2.0)
 
 
 def show_szechuan_sauce() -> None:
     theme = settings.color_theme
-    console.print(
-        Panel(
-            "[bold yellow]I want that Mulan McNugget Sauce, Morty!\n\n"
-            "That's my series arc, Morty!\n"
-            "If it takes nine seasons, I want my\n"
-            "[bold red]SZECHUAN DIPPING SAUCE[/bold red][bold yellow], Morty!\n\n"
-            "— Rick Sanchez, C-137",
-            title="[bold red]SZECHUAN SAUCE[/bold red]",
-            border_style=theme,
-        ),
-        justify="center",
-    )
-    _sleep(2.5)
+    os.system("cls" if os.name == "nt" else "clear")
+    console.print()
+    console.print(Align.center(Panel(
+        "[bold yellow]McDIMENSION'S™[/bold yellow]\n"
+        "[dim white]Interdimensional Fast Food — Est. Dimension C-137[/dim white]",
+        border_style="yellow", padding=(0, 8),
+    )))
+    console.print()
+    typing_effect("  > Scanning McNugget sauce inventory across 826 dimensions...", theme, delay=0.015)
+    console.print()
+
+    dims = [
+        "C-137", "J19ζ7", "K-83", "35-C", "C-500A",
+        "J-22", "C-1239", "Froopyland", "Citadel of Ricks", "C-131",
+    ]
+    with Progress(
+        SpinnerColumn(style="bold yellow"),
+        TextColumn("[white]Scanning [yellow]{task.description}[/yellow]"),
+        BarColumn(bar_width=28, style="dim yellow", complete_style="yellow"),
+        TextColumn("[bold red]OUT OF STOCK[/bold red]"),
+        console=console,
+    ) as prog:
+        for dim in dims:
+            t = prog.add_task(f"{dim:<26}", total=100)
+            for _ in range(40):
+                time.sleep(0.008)
+                prog.advance(t, 2.5)
+            prog.update(t, completed=100)
+
+    console.print()
+    console.print(Align.center(Panel(
+        "[bold red]SZECHUAN McNUGGET SAUCE[/bold red]\n"
+        "[bold white]DISCONTINUED ACROSS ALL 826 KNOWN DIMENSIONS[/bold white]\n\n"
+        "[dim white]Original Mulan promotion — 1998. Unavailable in any timeline.[/dim white]",
+        border_style="red", padding=(1, 4),
+    )))
+    console.print()
+    typing_effect("  > That's my series arc, Morty!", "yellow", delay=0.04)
+    typing_effect("  > If it takes nine seasons...", "yellow", delay=0.03)
+    typing_effect("  > I want that Mulan McNugget Sauce, Morty!", "bold red", delay=0.05)
+    _sleep(2.0)
+
+
+def show_rickroll() -> None:
+    import shutil
+    import subprocess
+    import threading
+    from pathlib import Path
+    theme = settings.color_theme
+    cols, rows = shutil.get_terminal_size()
+
+    # Start music if file exists
+    music_path = Path(__file__).parent / "evilmorty.mp3"
+    audio_proc = None
+    if music_path.exists():
+        try:
+            audio_proc = subprocess.Popen(
+                ["afplay", str(music_path)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            audio_proc = None
+
+    # Evil Morty palette — override theme with red/dark
+    evil_hi  = "bold red"
+    evil_mid = "red"
+    evil_lo  = "dim red"
+
+    bar_count = cols // 3
+    bars = [random.random() for _ in range(bar_count)]
+
+    _key = threading.Event()
+
+    def _wait_key() -> None:
+        try:
+            import readchar as _rc
+            _rc.readchar()
+        except Exception:
+            pass
+        _key.set()
+
+    threading.Thread(target=_wait_key, daemon=True).start()
+
+    with Live(refresh_per_second=24, screen=True) as live:
+        start = time.time()
+        while not _key.is_set():
+            elapsed = time.time() - start
+            for i in range(bar_count):
+                target = (math.sin(i * 0.6 + elapsed * 3.5) + 1) / 2 * 0.7 + random.uniform(0, 0.3)
+                bars[i] += (target - bars[i]) * 0.3
+                bars[i] = max(0.02, min(1.0, bars[i]))
+
+            bar_h = rows - 4
+            lines = []
+            for row in range(bar_h):
+                line = Text()
+                threshold = 1.0 - row / bar_h
+                for height in bars:
+                    diff = height - threshold
+                    if diff > 0.15:
+                        line.append("█  ", style=evil_hi)
+                    elif diff > 0.0:
+                        line.append("▓  ", style=evil_mid)
+                    elif diff > -0.08:
+                        line.append("░  ", style=evil_lo)
+                    else:
+                        line.append("   ")
+                lines.append(line)
+
+            note_row = Text()
+            for _ in range(cols):
+                if random.random() < 0.06:
+                    note_row.append(random.choice(_MUSIC_NOTES), style=evil_lo)
+                else:
+                    note_row.append(" ")
+            lines.append(note_row)
+
+            hint = Text(justify="center")
+            hint.append(
+                "  ✖  EVIL MORTY HAS TAKEN CONTROL  ✖   ",
+                style=evil_hi,
+            )
+            hint.append("press any key to escape", style=evil_lo)
+            lines.append(hint)
+
+            live.update(Group(*lines))
+            time.sleep(0.042)
+
+    if audio_proc and audio_proc.poll() is None:
+        audio_proc.terminate()
+
+    os.system("cls" if os.name == "nt" else "clear")

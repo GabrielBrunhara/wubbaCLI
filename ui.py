@@ -1097,6 +1097,6 @@ def show_costar_results(costars: List[Tuple[Character, int]], target_name: str) 
 def press_any_key(msg: str = "Press Enter to continue...") -> None:
     color = _theme()
     try:
-        input(f"\n  [{color}]{msg}[/{color}] ")
+        console.input(f"\n  [{color}]{msg}[/{color}] ")
     except (EOFError, KeyboardInterrupt):
         pass
