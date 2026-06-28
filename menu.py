@@ -30,6 +30,7 @@ from ui import (
     show_error, show_export_menu, show_games_menu, show_info, show_menu,
     show_search_results, show_settings, show_episode, show_success,
 )
+from explore import mode_explore
 from utils import clear_screen
 
 
@@ -94,8 +95,13 @@ def _view_character(char: Character) -> None:
             _export_mode(char, art)
 
         elif action == "S":
+            from explore import _get_all_episodes
+            try:
+                all_eps = _get_all_episodes()
+            except APIError:
+                all_eps = None
             clear_screen()
-            show_character_stats(char)
+            show_character_stats(char, all_episodes=all_eps)
             press_any_key()
 
         elif action in ("Q", "B"):
@@ -538,6 +544,7 @@ _DISPATCH = {
     "G": mode_games,
     "F": mode_favorites,
     "H": mode_history,
+    "X": mode_explore,
     "S": mode_settings,
 }
 

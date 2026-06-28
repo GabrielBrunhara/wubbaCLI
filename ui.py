@@ -14,7 +14,7 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from api import Character, Episode
+from api import Character, Episode, Location
 from settings import settings
 
 console = Console()
@@ -118,6 +118,7 @@ MENU_ITEMS = [
     ("G", "Games",            "Mini-games and trivia"),
     ("F", "Favorites",        "Your bookmarked characters"),
     ("H", "History",          "Recently viewed characters"),
+    ("X", "Explore",          "Discover locations, dimensions & universe stats"),
     ("S", "Settings",         "Configure appearance and behavior"),
     ("Q", "Quit",             "Wubba lubba dub dub"),
 ]
@@ -470,7 +471,7 @@ def show_character_list(characters: List[Character], title: str) -> Optional[int
 
 # ── Stats panel ───────────────────────────────────────────────────────────────
 
-def show_character_stats(char: Character) -> None:
+def show_character_stats(char: Character, all_episodes=None) -> None:
     color = _theme()
     console.print()
     _divider(f"  Character Stats — {char.name}  ")
@@ -495,21 +496,10 @@ def show_character_stats(char: Character) -> None:
         Panel(t, title=f"[bold {color}]{char.name}[/bold {color}]", border_style=color, padding=(1, 4))
     )
 
-    # Episode list (first 20)
-    if char.episodes:
-        ep_t = Table(show_header=False, border_style=f"dim {color}", box=None)
-        ep_t.add_column(style=f"dim {color}", no_wrap=True)
-        ep_t.add_column(style="white")
-        shown = char.episodes[:20]
-        for ep_url in shown:
-            ep_id = ep_url.rstrip("/").split("/")[-1]
-            ep_t.add_row(f"  Ep. {ep_id}", ep_url)
-        if len(char.episodes) > 20:
-            ep_t.add_row("  …", f"and {len(char.episodes) - 20} more")
-        console.print(
-            Panel(ep_t, title=f"[dim {color}]Episodes[/dim {color}]", border_style=f"dim {color}")
-        )
-    console.print()
+    if all_episodes:
+        show_character_timeline(char, all_episodes)
+    else:
+        console.print()
 
 
 # ── Settings menu ─────────────────────────────────────────────────────────────
@@ -665,6 +655,441 @@ def show_score_board(scores: dict) -> None:
         Panel(t, title=f"[bold {color}]  Score Board  [/bold {color}]", border_style=color)
     )
     console.print()
+
+
+# ── Explore submenu ───────────────────────────────────────────────────────────
+
+EXPLORE_MENU_ITEMS = [
+    ("L", "Locations",       "Browse all 126 known locations"),
+    ("D", "Dimensions",      "Atlas of every discovered dimension"),
+    ("N", "Universe Census", "Live stats across all 826 characters"),
+    ("S", "Season Guide",    "All episodes organised by season"),
+    ("W", "Most Wanted",     "Leaderboards across the universe"),
+    ("K", "Dead Roster",     "Log of all confirmed casualties"),
+    ("Q", "Back",            ""),
+]
+
+
+def show_explore_menu() -> str:
+    color = _theme()
+    console.print()
+    t = Table.grid(padding=(0, 3))
+    t.add_column(style=f"bold {color}", width=4, justify="right")
+    t.add_column(style="bold white", width=22)
+    t.add_column(style="dim white")
+    for key, name, desc in EXPLORE_MENU_ITEMS:
+        t.add_row(f"[{color}]{key}[/{color}]", name, desc)
+    console.print(Panel(
+        Align.center(t),
+        title=f"[bold {color}]  EXPLORE THE UNIVERSE  [/bold {color}]",
+        border_style=color, padding=(1, 4),
+    ))
+    console.print()
+    valid = {item[0] for item in EXPLORE_MENU_ITEMS}
+    console.print(f"  [bold {color}]▶[/bold {color}] ", end="")
+    console.file.flush()
+    return getch(valid)
+
+
+# ── Location display ───────────────────────────────────────────────────────────
+
+def show_location_list(locations: List[Location], title: str) -> Optional[int]:
+    if not locations:
+        show_info("No locations found.")
+        return None
+    color = _theme()
+    console.print()
+    t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    t.add_column("#", style="dim", width=5, justify="right")
+    t.add_column("Name", style="bold white")
+    t.add_column("Type")
+    t.add_column("Dimension")
+    t.add_column("Residents", justify="right", style=color)
+    for i, loc in enumerate(locations, 1):
+        t.add_row(str(i), loc.name, loc.type, loc.dimension, str(loc.resident_count))
+    console.print(Panel(t, title=f"[bold {color}]  {title}  [/bold {color}]", border_style=color))
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Enter number to open (or Q)[/bold {color}]").strip()
+    if raw.upper() == "Q":
+        return None
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(locations):
+            return idx
+    except ValueError:
+        pass
+    show_error("Invalid selection.")
+    return None
+
+
+def show_location(location: Location, residents: List[Character]) -> None:
+    color = _theme()
+    console.print()
+    _divider(f"  #{location.id}  {location.name}  ")
+    rows: List[Tuple[str, str]] = [
+        ("Type",      location.type),
+        ("Dimension", location.dimension),
+        ("Residents", str(location.resident_count)),
+    ]
+    console.print(Panel(
+        _info_table(rows, color),
+        title=f"[bold {color}]{location.name}[/bold {color}]",
+        border_style=color, padding=(1, 2),
+    ))
+    if residents:
+        console.print()
+        t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+        t.add_column("#", style="dim", width=4)
+        t.add_column("Name", style="bold white")
+        t.add_column("Status")
+        t.add_column("Species")
+        for i, c in enumerate(residents, 1):
+            t.add_row(
+                str(i), c.name,
+                f"[{c.status_color}]{c.status_icon} {c.status}[/{c.status_color}]",
+                c.species,
+            )
+        console.print(t)
+    console.print()
+    console.print(f"  [dim][{color}]<number>[/{color}] Open resident  [{color}]Q[/{color}] Back[/dim]")
+    console.print()
+
+
+# ── Dimension atlas ────────────────────────────────────────────────────────────
+
+def show_dimension_list(dims: List[Tuple[str, int, int]]) -> Optional[int]:
+    """dims: list of (dimension_name, location_count, resident_count). Returns index or None."""
+    color = _theme()
+    console.print()
+    t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    t.add_column("#", style="dim", width=5, justify="right")
+    t.add_column("Dimension", style="bold white")
+    t.add_column("Locations", justify="right", style=color)
+    t.add_column("Residents", justify="right")
+    for i, (name, locs, res) in enumerate(dims, 1):
+        t.add_row(str(i), name, str(locs), str(res))
+    console.print(Panel(
+        t,
+        title=f"[bold {color}]  DIMENSION ATLAS — {len(dims)} dimensions  [/bold {color}]",
+        border_style=color,
+    ))
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Enter number to explore (or Q)[/bold {color}]").strip()
+    if raw.upper() == "Q":
+        return None
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(dims):
+            return idx
+    except ValueError:
+        pass
+    show_error("Invalid selection.")
+    return None
+
+
+# ── Census ─────────────────────────────────────────────────────────────────────
+
+def _bar(count: int, total: int, width: int = 28) -> str:
+    filled = round(count / total * width) if total else 0
+    return f"[green]{'█' * filled}[/green][dim]{'░' * (width - filled)}[/dim]"
+
+
+def show_census(stats: dict) -> None:
+    color = _theme()
+    console.print()
+    _divider("  Universe Census  ")
+
+    # Totals header
+    totals = Table.grid(padding=(0, 4))
+    totals.add_column(justify="center", style=f"bold {color}")
+    totals.add_column(justify="center", style=f"bold {color}")
+    totals.add_column(justify="center", style=f"bold {color}")
+    totals.add_row(
+        f"[bold white]{stats['total_chars']}[/bold white]\ncharacters",
+        f"[bold white]{stats['total_locs']}[/bold white]\nlocations",
+        f"[bold white]{stats['total_eps']}[/bold white]\nepisodes",
+    )
+    console.print(Panel(Align.center(totals), border_style=color, padding=(0, 4)))
+    console.print()
+
+    # Status breakdown
+    total = stats["total_chars"]
+    status_t = Table.grid(padding=(0, 2))
+    status_t.add_column(width=10, style="bold white")
+    status_t.add_column(width=30)
+    status_t.add_column(width=8, justify="right", style=color)
+    status_t.add_column(width=6, justify="right", style="dim")
+    for label, key, col in [("Alive", "alive", "green"), ("Dead", "dead", "red"), ("Unknown", "unknown", "yellow")]:
+        n = stats[key]
+        pct = f"{n/total*100:.0f}%"
+        status_t.add_row(label, _bar(n, total), str(n), pct)
+    console.print(Panel(status_t, title=f"[bold {color}]Status[/bold {color}]", border_style=f"dim {color}", padding=(1, 2)))
+    console.print()
+
+    # Species top 10
+    species_t = Table.grid(padding=(0, 2))
+    species_t.add_column(width=22, style="bold white")
+    species_t.add_column(width=30)
+    species_t.add_column(width=6, justify="right", style=color)
+    top_sp = stats["species"][:10]
+    max_sp = top_sp[0][1] if top_sp else 1
+    for sp, n in top_sp:
+        species_t.add_row(sp, _bar(n, max_sp), str(n))
+    console.print(Panel(species_t, title=f"[bold {color}]Top Species[/bold {color}]", border_style=f"dim {color}", padding=(1, 2)))
+    console.print()
+
+    # Gender breakdown
+    gender_t = Table.grid(padding=(0, 2))
+    gender_t.add_column(width=12, style="bold white")
+    gender_t.add_column(width=30)
+    gender_t.add_column(width=6, justify="right", style=color)
+    for g, n in stats["gender"].items():
+        gender_t.add_row(g.title(), _bar(n, total), str(n))
+    console.print(Panel(gender_t, title=f"[bold {color}]Gender[/bold {color}]", border_style=f"dim {color}", padding=(1, 2)))
+    console.print()
+
+    # Top locations
+    loc_t = Table.grid(padding=(0, 2))
+    loc_t.add_column(width=30, style="bold white")
+    loc_t.add_column(width=30)
+    loc_t.add_column(width=6, justify="right", style=color)
+    top_locs = stats["locations"][:8]
+    max_loc = top_locs[0][1] if top_locs else 1
+    for loc, n in top_locs:
+        loc_t.add_row(loc, _bar(n, max_loc), str(n))
+    console.print(Panel(loc_t, title=f"[bold {color}]Most Populated Locations[/bold {color}]", border_style=f"dim {color}", padding=(1, 2)))
+    console.print()
+
+
+# ── Season guide ───────────────────────────────────────────────────────────────
+
+def show_season_list(seasons: List[Tuple[str, List["Episode"]]]) -> Optional[int]:
+    """Show season summary; return 0-based season index or None."""
+    color = _theme()
+    console.print()
+    t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    t.add_column("Season", style="bold white", width=8)
+    t.add_column("Episodes", justify="right", style=color)
+    t.add_column("Characters", justify="right")
+    t.add_column("Air Window")
+    for label, eps in seasons:
+        chars = sum(e.character_count for e in eps)
+        air = f"{eps[0].air_date}  →  {eps[-1].air_date}" if eps else ""
+        t.add_row(label, str(len(eps)), str(chars), air)
+    console.print(Panel(t, title=f"[bold {color}]  Episode Guide  [/bold {color}]", border_style=color))
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Enter season number (1-5) or Q[/bold {color}]").strip()
+    if raw.upper() == "Q":
+        return None
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(seasons):
+            return idx
+    except ValueError:
+        pass
+    show_error("Invalid selection.")
+    return None
+
+
+def show_season_episodes(label: str, episodes: List["Episode"]) -> Optional[int]:
+    color = _theme()
+    console.print()
+    t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    t.add_column("#", style="dim", width=4)
+    t.add_column("Code", style=color, width=8)
+    t.add_column("Title", style="bold white")
+    t.add_column("Air Date")
+    t.add_column("Cast", justify="right")
+    for i, ep in enumerate(episodes, 1):
+        t.add_row(str(i), ep.episode, ep.name, ep.air_date, str(ep.character_count))
+    console.print(Panel(t, title=f"[bold {color}]  {label}  [/bold {color}]", border_style=color))
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Enter episode number for Cast Roll (or Q)[/bold {color}]").strip()
+    if raw.upper() == "Q":
+        return None
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(episodes):
+            return idx
+    except ValueError:
+        pass
+    show_error("Invalid selection.")
+    return None
+
+
+# ── Character timeline ─────────────────────────────────────────────────────────
+
+def show_character_timeline(char: Character, all_episodes: List["Episode"]) -> None:
+    color = _theme()
+    appeared = {int(u.rstrip("/").split("/")[-1]) for u in char.episodes}
+    seasons = [
+        ("S1", range(1, 12)), ("S2", range(12, 22)), ("S3", range(22, 32)),
+        ("S4", range(32, 42)), ("S5", range(42, 52)),
+    ]
+    ep_map = {e.id: e for e in all_episodes}
+    console.print()
+    _divider(f"  Episode Timeline — {char.name}  ")
+
+    grid_t = Table.grid(padding=(0, 1))
+    grid_t.add_column(width=4, style="dim")
+    grid_t.add_column()
+    for s_label, s_range in seasons:
+        cells = Text()
+        for n in s_range:
+            if n in appeared:
+                cells.append("■ ", style=f"bold {color}")
+            else:
+                cells.append("□ ", style="dim")
+        grid_t.add_row(s_label, cells)
+
+    ep_ids_sorted = sorted(appeared)
+    first_ep = ep_map.get(ep_ids_sorted[0]) if ep_ids_sorted else None
+    last_ep  = ep_map.get(ep_ids_sorted[-1]) if ep_ids_sorted else None
+
+    footer_rows: List[Tuple[str, str]] = [
+        ("Appearances", f"{char.episode_count} / 51"),
+    ]
+    if first_ep:
+        footer_rows.append(("First seen", f"{first_ep.episode} — {first_ep.name}  ({first_ep.air_date})"))
+    if last_ep and last_ep.id != (first_ep.id if first_ep else -1):
+        footer_rows.append(("Last seen",  f"{last_ep.episode} — {last_ep.name}  ({last_ep.air_date})"))
+
+    console.print(Panel(
+        Group(grid_t, Text(""), _info_table(footer_rows, color)),
+        title=f"[bold {color}]{char.name}[/bold {color}]",
+        border_style=color, padding=(1, 2),
+    ))
+    console.print()
+
+
+# ── Leaderboard ────────────────────────────────────────────────────────────────
+
+def show_leaderboard(chars: List[Character]) -> None:
+    color = _theme()
+    console.print()
+    _divider("  Most Wanted — Universe Leaderboard  ")
+
+    # Most appearances
+    top_chars = sorted(chars, key=lambda c: c.episode_count, reverse=True)[:10]
+    app_t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    app_t.add_column("#", style="dim", width=4)
+    app_t.add_column("Name", style="bold white")
+    app_t.add_column("Episodes", justify="right", style=color)
+    app_t.add_column("Status")
+    app_t.add_column("Species")
+    for i, c in enumerate(top_chars, 1):
+        app_t.add_row(
+            str(i), c.name, str(c.episode_count),
+            f"[{c.status_color}]{c.status_icon} {c.status}[/{c.status_color}]", c.species,
+        )
+    console.print(Panel(app_t, title=f"[bold {color}]Most Appearances[/bold {color}]", border_style=f"dim {color}"))
+    console.print()
+
+    # Species distribution (top 8)
+    from collections import Counter
+    sp_count = Counter(c.species for c in chars)
+    sp_t = Table.grid(padding=(0, 2))
+    sp_t.add_column(width=24, style="bold white")
+    sp_t.add_column(width=30)
+    sp_t.add_column(width=6, justify="right", style=color)
+    top_sp = sp_count.most_common(8)
+    max_n = top_sp[0][1] if top_sp else 1
+    for sp, n in top_sp:
+        sp_t.add_row(sp, _bar(n, max_n), str(n))
+    console.print(Panel(sp_t, title=f"[bold {color}]Species Distribution[/bold {color}]", border_style=f"dim {color}", padding=(1, 2)))
+    console.print()
+
+    # Deadliest species
+    dead = [c for c in chars if c.status.lower() == "dead"]
+    dead_sp = Counter(c.species for c in dead)
+    dead_t = Table.grid(padding=(0, 2))
+    dead_t.add_column(width=24, style="bold white")
+    dead_t.add_column(width=30)
+    dead_t.add_column(width=6, justify="right", style="red")
+    top_dead = dead_sp.most_common(8)
+    max_d = top_dead[0][1] if top_dead else 1
+    for sp, n in top_dead:
+        dead_t.add_row(sp, _bar(n, max_d), str(n))
+    console.print(Panel(dead_t, title=f"[bold {color}]Most Deaths by Species[/bold {color}]", border_style=f"dim {color}", padding=(1, 2)))
+    console.print()
+
+
+# ── Dead roster ────────────────────────────────────────────────────────────────
+
+def show_dead_roster(chars: List[Character], page: int, per_page: int = 25) -> Optional[int]:
+    color = _theme()
+    total_pages = (len(chars) - 1) // per_page + 1
+    start = page * per_page
+    chunk = chars[start: start + per_page]
+    console.print()
+    t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    t.add_column("#", style="dim", width=5, justify="right")
+    t.add_column("Name", style="bold white")
+    t.add_column("Species")
+    t.add_column("Last Known Location")
+    for i, c in enumerate(chunk, start + 1):
+        t.add_row(str(i), c.name, c.species, c.location)
+    console.print(Panel(
+        t,
+        title=f"[bold red]  ✕ DEAD ROSTER — {len(chars)} casualties  [/bold red]",
+        subtitle=f"[dim {color}]Page {page+1}/{total_pages}[/dim {color}]",
+        border_style="red",
+    ))
+    console.print()
+    console.print(
+        f"  [dim][{color}]<number>[/{color}] Open  "
+        f"[{color}]N[/{color}] Next  [{color}]P[/{color}] Prev  [{color}]Q[/{color}] Back[/dim]"
+    )
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]▶[/bold {color}]").strip().upper()
+    if raw == "Q":
+        return None
+    if raw == "N":
+        return -(page + 1) - 1  # encode "next page" as negative
+    if raw == "P":
+        return -(page - 1) - 1  # encode "prev page" as negative
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(chars):
+            return idx
+    except ValueError:
+        pass
+    show_error("Invalid input.")
+    return -999
+
+
+def show_costar_results(costars: List[Tuple[Character, int]], target_name: str) -> Optional[int]:
+    color = _theme()
+    console.print()
+    t = Table(show_header=True, header_style=f"bold {color}", border_style=f"dim {color}")
+    t.add_column("#", style="dim", width=4)
+    t.add_column("Name", style="bold white")
+    t.add_column("Shared Eps", justify="right", style=color)
+    t.add_column("Status")
+    t.add_column("Species")
+    for i, (c, shared) in enumerate(costars, 1):
+        t.add_row(
+            str(i), c.name, str(shared),
+            f"[{c.status_color}]{c.status_icon} {c.status}[/{c.status_color}]",
+            c.species,
+        )
+    console.print(Panel(
+        t,
+        title=f"[bold {color}]  Co-Stars of {target_name}  [/bold {color}]",
+        border_style=color,
+    ))
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Enter number to open (or Q)[/bold {color}]").strip()
+    if raw.upper() == "Q":
+        return None
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(costars):
+            return idx
+    except ValueError:
+        pass
+    show_error("Invalid selection.")
+    return None
 
 
 # ── Press any key ─────────────────────────────────────────────────────────────

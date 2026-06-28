@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import random
+import time
 from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, List, Optional
 
@@ -76,6 +77,37 @@ class Character:
 
 
 @dataclass
+class Location:
+    id: int
+    name: str
+    type: str
+    dimension: str
+    residents: List[str]
+    url: str
+    created: str
+
+    @property
+    def resident_count(self) -> int:
+        return len(self.residents)
+
+    @property
+    def resident_ids(self) -> List[int]:
+        return [int(u.rstrip("/").split("/")[-1]) for u in self.residents]
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Location":
+        return cls(
+            id=d["id"],
+            name=d["name"],
+            type=d.get("type", "") or "unknown",
+            dimension=d.get("dimension", "") or "unknown",
+            residents=d.get("residents", []),
+            url=d["url"],
+            created=d["created"],
+        )
+
+
+@dataclass
 class Episode:
     id: int
     name: str
@@ -117,20 +149,38 @@ class RickAndMortyAPI:
         return cls._session
 
     @classmethod
+    def _request(cls, url: str, params: Optional[Dict] = None) -> Any:
+        """GET with exponential back-off on 429 (rate limit). Used by all callers."""
+        for wait in (1, 2, 4, 8, 16, None):
+            try:
+                r = cls._get_session().get(url, params=params, timeout=10)
+            except requests.ConnectionError:
+                raise APIError("No internet connection. Check your network.")
+            except requests.Timeout:
+                raise APIError("Request timed out — the API may be overwhelmed.")
+            if r.status_code == 429:
+                if wait is None:
+                    raise APIError("Rate limited by the API. Please wait and try again.")
+                time.sleep(wait)
+                continue
+            try:
+                r.raise_for_status()
+                return r.json()
+            except requests.HTTPError as exc:
+                code = exc.response.status_code if exc.response is not None else "?"
+                if code == 404:
+                    raise APIError("Resource not found (404).")
+                raise APIError(f"API returned HTTP {code}.")
+            except Exception:
+                raise APIError("Failed to parse API response.")
+
+    @classmethod
     def _get(cls, path: str, params: Optional[Dict] = None) -> Any:
-        try:
-            r = cls._get_session().get(f"{BASE_URL}/{path}", params=params, timeout=10)
-            r.raise_for_status()
-            return r.json()
-        except requests.ConnectionError:
-            raise APIError("No internet connection. Check your network.")
-        except requests.Timeout:
-            raise APIError("Request timed out — the API may be overwhelmed.")
-        except requests.HTTPError as exc:
-            code = exc.response.status_code if exc.response is not None else "?"
-            if code == 404:
-                raise APIError("Resource not found (404).")
-            raise APIError(f"API returned HTTP {code}.")
+        return cls._request(f"{BASE_URL}/{path}", params=params)
+
+    @classmethod
+    def _get_url(cls, url: str) -> Any:
+        return cls._request(url)
 
     # ── Characters ────────────────────────────────────────────────────────────
 
@@ -155,7 +205,7 @@ class RickAndMortyAPI:
             return []
         results: List[Dict] = data["results"]
         while data["info"]["next"]:
-            data = cls._get_session().get(data["info"]["next"], timeout=10).json()
+            data = cls._get_url(data["info"]["next"])
             results.extend(data["results"])
         return [Character.from_dict(c) for c in results]
 
@@ -186,3 +236,76 @@ class RickAndMortyAPI:
     def get_random_episode(cls) -> Episode:
         total = cls._get("episode")["info"]["count"]
         return Episode.from_dict(cls._get(f"episode/{random.randint(1, total)}"))
+
+    @classmethod
+    def get_multiple_episodes(cls, ids: List[int]) -> List[Episode]:
+        if not ids:
+            return []
+        if len(ids) == 1:
+            return [cls.get_episode(ids[0])]
+        data = cls._get(f"episode/{','.join(map(str, ids))}")
+        if isinstance(data, dict):
+            return [Episode.from_dict(data)]
+        return [Episode.from_dict(e) for e in data]
+
+    @classmethod
+    def get_all_episodes(cls) -> List[Episode]:
+        data = cls._get("episode")
+        results = list(data["results"])
+        while data["info"]["next"]:
+            data = cls._get_url(data["info"]["next"])
+            results.extend(data["results"])
+        return [Episode.from_dict(e) for e in results]
+
+    # ── Locations ─────────────────────────────────────────────────────────────
+
+    @classmethod
+    def get_location(cls, lid: int) -> Location:
+        return Location.from_dict(cls._get(f"location/{lid}"))
+
+    @classmethod
+    def get_random_location(cls) -> Location:
+        total = cls._get("location")["info"]["count"]
+        return Location.from_dict(cls._get(f"location/{random.randint(1, total)}"))
+
+    @classmethod
+    def get_all_locations(cls) -> List[Location]:
+        data = cls._get("location")
+        results = list(data["results"])
+        while data["info"]["next"]:
+            data = cls._get_url(data["info"]["next"])
+            results.extend(data["results"])
+        return [Location.from_dict(l) for l in results]
+
+    @classmethod
+    def search_locations(cls, **filters) -> List[Location]:
+        try:
+            data = cls._get("location", params={k: v for k, v in filters.items() if v})
+        except APIError:
+            return []
+        results = list(data["results"])
+        while data["info"]["next"]:
+            data = cls._get_url(data["info"]["next"])
+            results.extend(data["results"])
+        return [Location.from_dict(l) for l in results]
+
+    # ── Bulk fetch ────────────────────────────────────────────────────────────
+
+    @classmethod
+    def get_all_characters(cls, **filters) -> List[Character]:
+        """Fetch every character page (optionally filtered)."""
+        params = {k: v for k, v in filters.items() if v is not None} or None
+        data = cls._get("character", params=params)
+        results = list(data["results"])
+        while data["info"]["next"]:
+            data = cls._get_url(data["info"]["next"])
+            results.extend(data["results"])
+        return [Character.from_dict(c) for c in results]
+
+    @classmethod
+    def count_characters(cls, **filters) -> int:
+        params = {k: v for k, v in filters.items() if v is not None} or None
+        try:
+            return cls._get("character", params=params)["info"]["count"]
+        except APIError:
+            return 0
