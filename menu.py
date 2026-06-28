@@ -11,9 +11,10 @@ from api import Character, Episode, RickAndMortyAPI, APIError
 from ascii_engine import image_url_to_ascii
 from cache import cache_stats, clear_cache
 from effects import (
-    console, reveal_ascii_art, typing_effect, portal_transition,
+    console, reveal_ascii_art, typing_effect,
     show_pickle_rick, show_wubba_lubba, show_portal_secret,
-    show_get_schwifty, show_szechuan_sauce, matrix_rain, _sleep,
+    show_get_schwifty, show_szechuan_sauce, _sleep,
+    matrix_rain_reveal,
 )
 from export import export_html, export_txt
 from favorites import favorites
@@ -26,8 +27,8 @@ from settings import settings, CHARSETS, THEMES, FIGLET_FONTS
 from ui import (
     OPACITY_CYCLE, confirm, press_any_key, show_character,
     show_character_action_prompt, show_character_list, show_character_stats,
-    show_error, show_export_menu, show_info, show_menu, show_search_results,
-    show_settings, show_episode, show_success,
+    show_error, show_export_menu, show_games_menu, show_info, show_menu,
+    show_search_results, show_settings, show_episode, show_success,
 )
 from utils import clear_screen
 
@@ -117,6 +118,8 @@ def _export_mode(char: Character, ascii_art: str) -> None:
         elif choice == "H":
             path = export_html(char, ascii_art)
             show_success(f"Exported → {path}")
+            import webbrowser
+            webbrowser.open(path.as_uri())
             press_any_key()
             break
 
@@ -295,22 +298,49 @@ def mode_history() -> None:
         _view_character(chars[idx])
 
 
-def mode_matrix() -> None:
-    """N — Matrix rain → reveal a random character."""
+def mode_games() -> None:
+    """G — Games and trivia submenu."""
+    while True:
+        clear_screen()
+        choice = show_games_menu()
+        if choice == "G":
+            run_guess_who()
+        elif choice == "A":
+            run_alive_or_dead()
+        elif choice == "S":
+            run_species_roulette()
+        elif choice == "E":
+            run_episode_counter()
+        elif choice == "R":
+            run_surprise_me()
+        elif choice == "P":
+            clear_screen()
+            run_score_board()
+            press_any_key()
+        elif choice == "Q":
+            break
+
+
+def mode_matrix_reveal() -> None:
+    """R — ASCII art emerges from the matrix rain; rain holds until Enter."""
+    import shutil
+    from cache import get_image
     clear_screen()
-    matrix_rain()
     try:
         char = RickAndMortyAPI.get_random_character()
-        art = image_url_to_ascii(char.image)
     except APIError as exc:
         show_error(str(exc))
         press_any_key()
         return
 
-    clear_screen()
-    portal_transition()
-    reveal_ascii_art(art, settings.color_theme, delay=0.008)
-    press_any_key()
+    term_cols, term_rows = shutil.get_terminal_size()
+    img = get_image(char.image)
+    img_w, img_h = img.size
+    max_w_for_height = int((term_rows - 6) / ((img_h / img_w) * 0.55))
+    matrix_width = max(20, min(settings.width, term_cols - 4, max_w_for_height))
+    art = image_url_to_ascii(char.image, width=matrix_width)
+
+    matrix_rain_reveal(art)
     _view_character(char)
 
 
@@ -337,13 +367,25 @@ def mode_settings() -> None:
             _sleep(0.8)
 
         elif choice == "C":
-            _pick_from_list("charset", list(CHARSETS.keys()), "Charset")
+            _pick_charset()
 
         elif choice == "T":
-            _pick_from_list("color_theme", list(THEMES.keys()), "Color Theme")
+            _pick_color_theme()
 
         elif choice == "F":
-            _pick_from_list("figlet_font", FIGLET_FONTS, "Figlet Font")
+            _pick_figlet_font()
+
+        elif choice == "A":
+            new_val = not settings.auto_width
+            settings.set("auto_width", new_val)
+            show_success(f"Auto Width {'enabled' if new_val else 'disabled'}.")
+            _sleep(0.8)
+
+        elif choice == "B":
+            new_val = "classic" if settings.boot_style == "epic" else "epic"
+            settings.set("boot_style", new_val)
+            show_success(f"Boot Style set to '{new_val}'.")
+            _sleep(0.8)
 
         elif choice == "E":
             new_val = not settings.effects_enabled
@@ -384,6 +426,88 @@ def mode_settings() -> None:
             break
 
 
+def _pick_color_theme() -> None:
+    """Color theme picker — each name rendered in its own colour."""
+    color = settings.color_theme
+    console.print()
+    for i, (name, hex_val) in enumerate(THEMES.items(), 1):
+        marker = f"  [dim {color}]◄[/dim {color}]" if name == settings.color_theme_name else ""
+        console.print(f"  [{color}]{i:2}[/{color}]  [{hex_val}]■  {name}[/{hex_val}]{marker}")
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Pick Color Theme (number)[/bold {color}]").strip()
+    try:
+        names = list(THEMES.keys())
+        idx = int(raw) - 1
+        if 0 <= idx < len(names):
+            settings.set("color_theme", names[idx])
+            show_success(f"Color Theme set to '{names[idx]}'.")
+        else:
+            show_error("Out of range.")
+    except ValueError:
+        show_error("Invalid number.")
+    _sleep(0.8)
+
+
+def _pick_charset() -> None:
+    """Charset picker — shows the actual chars as a preview."""
+    color = settings.color_theme
+    names = list(CHARSETS.keys())
+    console.print()
+    for i, name in enumerate(names, 1):
+        marker = f"  [dim {color}]◄[/dim {color}]" if name == settings.charset_name else ""
+        console.print(
+            f"  [{color}]{i:2}[/{color}]  [bold {color}]{name:<10}[/bold {color}]"
+            f"  [dim {color}]{CHARSETS[name]}[/dim {color}]{marker}"
+        )
+    console.print()
+    raw = Prompt.ask(f"  [bold {color}]Pick Charset (number)[/bold {color}]").strip()
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(names):
+            settings.set("charset", names[idx])
+            show_success(f"Charset set to '{names[idx]}'.")
+        else:
+            show_error("Out of range.")
+    except ValueError:
+        show_error("Invalid number.")
+    _sleep(0.8)
+
+
+def _pick_figlet_font() -> None:
+    """Figlet font picker — renders 'C137' as a live sample for each font."""
+    from pyfiglet import Figlet
+    from rich.text import Text as _Text
+    color = settings.color_theme
+    clear_screen()
+    console.print()
+    for i, font in enumerate(FIGLET_FONTS, 1):
+        header = _Text()
+        header.append(f"  {i:2}  ", style=f"bold {color}")
+        header.append(font, style=f"bold {color}")
+        if font == settings.figlet_font:
+            header.append("  ◄", style=f"dim {color}")
+        console.print(header)
+        try:
+            sample = Figlet(font=font).renderText("C137")
+            lines = [l for l in sample.split("\n") if l.strip()]
+            for line in lines:
+                console.print(_Text("       " + line, style=f"dim {color}"))
+        except Exception:
+            pass
+        console.print()
+    raw = Prompt.ask(f"  [bold {color}]Pick Figlet Font (number)[/bold {color}]").strip()
+    try:
+        idx = int(raw) - 1
+        if 0 <= idx < len(FIGLET_FONTS):
+            settings.set("figlet_font", FIGLET_FONTS[idx])
+            show_success(f"Figlet Font set to '{FIGLET_FONTS[idx]}'.")
+        else:
+            show_error("Out of range.")
+    except ValueError:
+        show_error("Invalid number.")
+    _sleep(0.8)
+
+
 def _pick_from_list(setting_key: str, options: list, label: str) -> None:
     """Helper: show numbered list, set setting by index."""
     color = settings.color_theme
@@ -407,19 +531,14 @@ def _pick_from_list(setting_key: str, options: list, label: str) -> None:
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
 _DISPATCH = {
-    "A": mode_classic,
-    "B": mode_character_viewer,
-    "C": run_guess_who,
-    "D": run_alive_or_dead,
-    "E": run_species_roulette,
-    "F": run_episode_counter,
-    "G": mode_search,
-    "H": mode_random_episode,
-    "J": mode_favorites,
-    "K": mode_history,
-    "M": mode_settings,
-    "N": mode_matrix,
-    "O": run_surprise_me,
+    "C": mode_character_viewer,
+    "B": mode_search,
+    "E": mode_random_episode,
+    "M": mode_matrix_reveal,
+    "G": mode_games,
+    "F": mode_favorites,
+    "H": mode_history,
+    "S": mode_settings,
 }
 
 
@@ -432,16 +551,11 @@ def run_app() -> None:
         if not raw:
             continue
 
-        if raw == "X":
+        if raw == "Q":
             clear_screen()
             typing_effect("  Wubba lubba dub dub!", settings.color_theme, delay=0.04)
             _sleep(0.8)
             break
-
-        # L — Export needs a character first
-        if raw == "L":
-            _export_pick()
-            continue
 
         fn = _DISPATCH.get(raw)
         if fn:

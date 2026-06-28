@@ -29,11 +29,15 @@ def main() -> None:
         _run_classic()
         return
 
-    from effects import boot_screen
+    from effects import boot_screen, epic_boot_screen
     from menu import run_app
+    from settings import settings
 
     if not flags["no_boot"]:
-        boot_screen()
+        if settings.boot_style == "epic" and settings.effects_enabled:
+            epic_boot_screen()
+        else:
+            boot_screen()
 
     try:
         run_app()

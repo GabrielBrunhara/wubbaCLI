@@ -48,7 +48,7 @@ def image_url_to_ascii(
     charset: str | None = None,
 ) -> str:
     """Fetch from cache (or download) and convert to ASCII art."""
-    w = width if width is not None else settings.width
+    w = width if width is not None else settings.display_width
     cs = charset if charset is not None else settings.charset
     image = get_image(url)
     return image_to_ascii(image, w, cs)

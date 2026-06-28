@@ -29,19 +29,21 @@ THEMES: Dict[str, str] = {
 }
 
 FIGLET_FONTS = [
-    "colossal", "banner3", "doom", "epic", "slant",
-    "big", "block", "digital", "ansi_shadow", "graffiti",
+    "ansi_shadow", "colossal", "banner3", "doom", "epic", "slant",
+    "big", "block", "digital", "graffiti",
 ]
 
 DEFAULTS: Dict[str, Any] = {
     "width":            100,
+    "auto_width":       True,
     "charset":          "detailed",
     "color_theme":      "green",
-    "figlet_font":      "colossal",
+    "figlet_font":      "ansi_shadow",
     "effects_enabled":  True,
     "typing_speed":     0.018,
     "animation_speed":  0.04,
     "matrix_duration":  3.5,
+    "boot_style":       "epic",
 }
 
 
@@ -90,6 +92,19 @@ class Settings:
         return int(self._data.get("width", 100))
 
     @property
+    def auto_width(self) -> bool:
+        return bool(self._data.get("auto_width", True))
+
+    @property
+    def display_width(self) -> int:
+        """Effective width used when generating ASCII art for display."""
+        if self.auto_width:
+            import shutil
+            cols, _ = shutil.get_terminal_size()
+            return max(20, cols - 6)
+        return self.width
+
+    @property
     def charset_name(self) -> str:
         return self._data.get("charset", "detailed")
 
@@ -107,7 +122,7 @@ class Settings:
 
     @property
     def figlet_font(self) -> str:
-        return self._data.get("figlet_font", "colossal")
+        return self._data.get("figlet_font", "ansi_shadow")
 
     @property
     def effects_enabled(self) -> bool:
@@ -124,6 +139,10 @@ class Settings:
     @property
     def matrix_duration(self) -> float:
         return float(self._data.get("matrix_duration", 3.5))
+
+    @property
+    def boot_style(self) -> str:
+        return str(self._data.get("boot_style", "epic"))
 
 
 # ── Module-level singleton ────────────────────────────────────────────────────

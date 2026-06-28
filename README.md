@@ -1,42 +1,40 @@
 ```
-██████╗ ██╗ ██████╗██╗  ██╗    ████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗
-██╔══██╗██║██╔════╝██║ ██╔╝    ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║████╗  ██║██╔══██╗██║
-██████╔╝██║██║     █████╔╝        ██║   █████╗  ██████╔╝██╔████╔██║██║██╔██╗ ██║███████║██║
-██╔══██╗██║██║     ██╔═██╗        ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██╔══██║██║
-██║  ██║██║╚██████╗██║  ██╗       ██║   ███████╗██║  ██║██║ ╚═╝ ██║██║██║ ╚████║██║  ██║███████╗
-╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
+██╗    ██╗██╗   ██╗██████╗ ██████╗  █████╗  ██████╗██╗     ██╗
+██║    ██║██║   ██║██╔══██╗██╔══██╗██╔══██╗██╔════╝██║     ██║
+██║ █╗ ██║██║   ██║██████╔╝██████╔╝███████║██║     ██║     ██║
+██║███╗██║██║   ██║██╔══██╗██╔══██╗██╔══██║██║     ██║     ██║
+╚███╔███╔╝╚██████╔╝██████╔╝██████╔╝██║  ██║╚██████╗███████╗██║
+ ╚══╝╚══╝  ╚═════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝
 ```
 
 <div align="center">
 
-**A terminal application that makes people say _"Caralho... isso foi feito em Python?"_**
+**A Rick and Morty terminal app that makes people ask _"Wait... this is Python?"_**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-00ff41?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Rich](https://img.shields.io/badge/Rich-13.7%2B-00ff41?style=flat-square)](https://github.com/Textualize/rich)
 [![Rick and Morty API](https://img.shields.io/badge/API-Rick%20%26%20Morty-00ff41?style=flat-square)](https://rickandmortyapi.com)
 [![License](https://img.shields.io/badge/License-MIT-00ff41?style=flat-square)](LICENSE)
 
-*Retrô dos anos 80 · Fallout · Matrix · DOS — tudo ao mesmo tempo*
-
 </div>
 
 ---
 
-## O que é isso
+## What is this
 
-Rick Terminal é um programa de terminal completo, construído em cima da [Rick and Morty API](https://rickandmortyapi.com), com uma interface TUI premium usando Rich.
+WubbaCLI is a full TUI application built on top of the [Rick and Morty API](https://rickandmortyapi.com), with a premium interface powered by Rich.
 
-Não é um script. É um software.
+This is not a script. It's software.
 
-Boot screen animado. Menu navegável. Arte ASCII gerada em tempo real. Jogos. Favoritos. Histórico. Exportação. Efeitos de matrix. Cache local. Easter eggs. Tudo funcionando, tudo integrado, tudo em Python puro.
+Animated portal boot screen. Navigable menu. Real-time ASCII art generation. Games. Favorites. History. Export. Matrix rain effects. Local cache. Easter eggs.
 
 ---
 
-## Instalação
+## Installation
 
 ```bash
-git clone https://github.com/seu-usuario/rick-terminal
-cd rick-terminal
+git clone https://github.com/your-username/wubba-cli
+cd wubba-cli
 
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
@@ -45,119 +43,124 @@ pip install -r requirements.txt
 python main.py
 ```
 
-> Requer Python 3.10+ e conexão com a internet para buscar personagens.
+> Requires Python 3.10+ and an internet connection to fetch characters.
 
 ---
 
-## Como usar
+## Usage
 
 ```bash
-# Modo completo (boot screen + menu interativo)
+# Full mode (animated boot screen + interactive menu)
 python main.py
 
-# Modo clássico — comportamento original: nome + arte ASCII, sem interface
+# Classic mode — random character, figlet name, ASCII art, no TUI
 python main.py --classic
 
-# Sem animações (mais rápido, útil em ambientes CI ou terminais lentos)
+# Skip animations (faster, useful on slow terminals)
 python main.py --no-effects
 
-# Pular o boot screen e ir direto ao menu
+# Skip the boot screen and go straight to the menu
 python main.py --no-boot
 ```
 
 ---
 
-## Menu
+## Boot Screen
 
-Ao iniciar, você verá uma tela de boot com barra de progresso e log de inicialização. Depois, o menu principal:
+The default **epic** mode fires a laser beam from the bottom-left corner of the screen toward the center, where an interdimensional portal opens — animated with polar coordinates, a spinning vortex, and particles of series references scattered across the terminal. The WubbaCLI logo materializes from inside the portal before it closes.
+
+The **classic** mode displays a static banner with a boot log and progress bar.
+
+Boot style can be changed in **Settings → B**.
+
+---
+
+## Main Menu
 
 ```
-╭───────────────────────────   ⚡  MAIN MENU  ⚡   ────────────────────────────╮
-│                                                                              │
-│    A   Classic Random         Random character in pure ASCII glory           │
-│    B   Character Viewer       Browse any character with full details         │
-│    C   Guess Who              Identify the character from their ASCII art    │
-│    D   Alive or Dead          Is this character still breathing?             │
-│    E   Species Roulette       Guess the species of a random character        │
-│    F   Episode Counter        How many episodes did they appear in?          │
-│    G   Search Character       Find a character by name                       │
-│    H   Random Episode         Explore a random episode of the show           │
-│    I   Character Stats        Deep-dive statistics for any character         │
-│    J   Favorites              Your bookmarked characters                     │
-│    K   History                Recently viewed characters                     │
-│    L   Export ASCII           Save ASCII art to TXT or HTML                  │
-│    M   Settings               Configure appearance and behavior              │
-│    N   Matrix Mode            Enter the Matrix… then meet a character        │
-│    O   Surprise Me            Let the universe decide                        │
-│    X   Exit                   Wubba lubba dub dub                            │
-│                                                                              │
-╰─────────────────────── Type a letter and press Enter ────────────────────────╯
+╭──────────────────────  MAIN MENU  ──────────────────────╮
+│                                                         │
+│    C   Character      Browse any character              │
+│    B   Search         Find a character by name          │
+│    E   Episode        Explore a random episode          │
+│    M   Matrix Reveal  ASCII art emerges from the rain   │
+│    G   Games          Mini-games and trivia             │
+│    F   Favorites      Your bookmarked characters        │
+│    H   History        Recently viewed characters        │
+│    S   Settings       Configure appearance              │
+│    Q   Quit           Wubba lubba dub dub               │
+│                                                         │
+╰──────────────────── Type a letter + Enter ──────────────╯
 ```
 
 ---
 
-## Funcionalidades
+## Features
 
-### 🎨 Character Viewer
-Exibe personagem com arte ASCII à esquerda e painel de informações à direita. Suporta:
-- `F` para favoritar/desfavoritar
-- `E` para exportar (TXT ou HTML)
-- `S` para ver estatísticas completas
+### Character Viewer
+ASCII art on the left, info panel on the right. Available actions:
+- `F` — add / remove from favorites
+- `T` — toggle ASCII art opacity (50% / 100%)
+- `E` — export (TXT or HTML)
+- `S` — full character stats
+- `Q` — back
 
-### 🔍 Search
-Busca por nome. Se houver apenas um resultado, abre diretamente. Se houver vários, exibe uma tabela numerada com status e contagem de episódios.
+### Search
+Search by name. One result: opens directly. Multiple results: numbered table with status and episode count.
 
-### 🎮 Jogos
+### Episode
+Picks a random episode, displays its code, air date, and character list. Open any character from the list by number.
 
-| Jogo | Como funciona |
+### Matrix Reveal
+Full-screen matrix-style character rain. A random character's ASCII art gradually emerges from the rain. Press Enter to open the full Character Viewer.
+
+### Games
+
+| Game | Description |
 |---|---|
-| **Guess Who** | Vê a arte ASCII, escolhe o nome entre 4 opções |
-| **Alive or Dead** | Vê nome e dados, adivinha o status |
-| **Species Roulette** | Vê o personagem, adivinha a espécie |
-| **Episode Counter** | Adivinha quantos episódios o personagem apareceu |
-| **Surprise Me** | O universo escolhe um dos jogos por você |
+| **G — Guess Who** | See the ASCII art, pick the name from 4 options |
+| **A — Alive or Dead** | See the name and data, guess the status |
+| **S — Species Roulette** | See the character, guess their species |
+| **E — Episode Counter** | Guess how many episodes the character appeared in |
+| **R — Random Game** | Let the universe decide |
+| **P — Scores** | Persistent scoreboard per game |
 
-Todos os jogos têm pontuação persistida em `scores.json`.
+### Favorites & History
+- **Favorites** — persisted in `favorites.json`
+- **History** — last 50 viewed characters, persisted in `history.json`
 
-### 📺 Random Episode
-Sorteia um episódio, exibe código, data e todos os personagens. Você pode abrir qualquer personagem da lista diretamente.
+### Export
+Any ASCII art can be exported to:
+- **TXT** — plain text file with character metadata
+- **HTML** — self-contained page with dark background and monospace font
 
-### ⭐ Favoritos e Histórico
-- **Favoritos**: persistidos em `favorites.json`, acessíveis a qualquer momento
-- **Histórico**: últimos 50 personagens visualizados, persistidos em `history.json`, ordenados do mais recente
+Files saved to `exports/`.
 
-### 📤 Exportação
-Exporte qualquer arte ASCII para:
-- **TXT** — arquivo de texto simples com metadados do personagem
-- **HTML** — página completa, self-contained, com fundo escuro e fonte monoespaçada
+### Cache
+Images are downloaded once and stored in `ascii_cache/`. Can be cleared from Settings.
 
-Arquivos salvos em `exports/`.
+### Settings
 
-### 💾 Cache
-Imagens são baixadas uma única vez e armazenadas em `ascii_cache/`. O cache pode ser limpo pelo menu de Settings.
+| Key | Option | Values |
+|---|---|---|
+| W | ASCII Width | 40 – 300 |
+| A | Auto Width | ON / OFF |
+| C | Charset | `detailed` `simple` `blocks` `binary` `dense` `matrix` `braille` |
+| T | Color Theme | `green` `cyan` `amber` `red` `purple` `white` `blue` |
+| F | Figlet Font | `ansi_shadow` `colossal` `doom` `epic` `slant` `big` `block` `digital` and more |
+| E | Effects | ON / OFF |
+| B | Boot Style | `epic` / `classic` |
+| S | Typing Speed | 0 – 0.2s per character |
+| R | Reset Defaults | — |
+| X | Clear Cache | — |
 
-### ⚙️ Settings
-Configure tudo pelo menu `M`:
-
-| Opção | Valores disponíveis |
-|---|---|
-| ASCII Width | 40 – 300 |
-| Charset | `detailed` `simple` `blocks` `binary` `dense` `matrix` `braille` |
-| Color Theme | `green` `cyan` `amber` `red` `purple` `white` `blue` |
-| Figlet Font | `colossal` `doom` `epic` `slant` `big` `block` `digital` e outros |
-| Effects | ON / OFF |
-| Typing Speed | 0 – 0.2s por caractere |
-
-As configurações são salvas em `config.json`.
-
-### 🌧️ Matrix Mode
-Chuva de caracteres em estilo Matrix toma a tela inteira. Depois, transição de portal. Depois, um personagem aleatório revelado linha por linha.
+Settings are persisted to `config.json`. The title and portal logo in the boot animation both use the selected figlet font.
 
 ---
 
 ## Easter Eggs
 
-Digite qualquer um dos termos abaixo diretamente no prompt do menu:
+Type any of the following terms at the search prompt:
 
 ```
 pickle rick
@@ -168,88 +171,55 @@ szechuan
 rickroll
 ```
 
-Há outros. Boa sorte.
-
 ---
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
-rick-terminal/
+wubba-cli/
 │
-├── main.py          # Entry point, flags de CLI
-├── menu.py          # Loop principal e dispatch de modos
+├── main.py          # Entry point, CLI flag parsing
+├── menu.py          # Main loop and mode dispatch
 │
-├── api.py           # Cliente da Rick and Morty API
-├── ascii_engine.py  # Pipeline de conversão imagem → ASCII
-├── cache.py         # Cache local de imagens (nunca baixa duas vezes)
+├── api.py           # Rick and Morty API client
+├── ascii_engine.py  # Image → ASCII conversion pipeline
+├── cache.py         # Local image cache
 │
-├── effects.py       # Boot screen, matrix rain, typewriter, portal
-├── ui.py            # Todos os painéis e prompts Rich
-├── export.py        # Exportação para TXT e HTML
+├── effects.py       # Boot screen (epic/classic), matrix rain, typewriter
+├── ui.py            # All Rich panels and prompts
+├── export.py        # TXT and HTML export
 │
-├── settings.py      # Configurações tipadas com persistência
-├── favorites.py     # Gerenciador de favoritos
-├── history.py       # Histórico de visualizações
-├── games.py         # Todos os mini-jogos e score tracker
-├── utils.py         # Constantes de caminhos e helpers de OS
+├── settings.py      # Typed settings with persistence
+├── favorites.py     # Favorites manager
+├── history.py       # View history
+├── games.py         # Mini-games and score tracker
+├── utils.py         # Path constants and OS helpers
 │
-├── config.json      # Preferências do usuário
+├── config.json      # User preferences (auto-generated)
 ├── requirements.txt
 │
-├── ascii_cache/     # Cache de imagens (gerado automaticamente)
-└── exports/         # Arquivos exportados (gerado automaticamente)
+├── ascii_cache/     # Image cache (auto-generated)
+└── exports/         # Exported files (auto-generated)
 ```
 
 ---
 
-## Dependências
+## Dependencies
 
 ```
 requests    — HTTP client
-Pillow      — Processamento de imagens
-rich        — Interface TUI
-pyfiglet    — Arte ASCII de texto
-colorama    — Compatibilidade de cores cross-platform
-readchar    — Leitura de input de caractere único
+Pillow      — Image processing
+rich        — TUI interface
+pyfiglet    — Text ASCII art
+colorama    — Cross-platform color support
+readchar    — Single-character input
 ```
 
 ---
 
-## Charsets disponíveis
+## License
 
-```
-detailed  →  @%#W$9876543210?!abc;:+=-,._ 
-simple    →  @#*+=-:. 
-blocks    →  █▓▒░ 
-binary    →  10 
-dense     →  MWNXK0Okxdolc:;,. 
-matrix    →  ﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ01 
-braille   →  ⣿⣷⣯⣟⡿⢿⣻⣽⣾⡽⢻⡟⣛⡻⢛⡓⢓⡑⢑ 
-```
-
----
-
-## Origem
-
-O projeto começou como um script de ~70 linhas que baixava a imagem de um personagem aleatório do Rick and Morty e a imprimia como arte ASCII no terminal.
-
-```python
-# rick_ascii.py — o código original que gerou tudo isso
-def main():
-    char = get_random_character()
-    fig = Figlet(font="colossal")
-    print(fig.renderText(char["name"]))
-    print(image_to_ascii(char["image"], width=WIDTH))
-```
-
-O `rick_ascii.py` original ainda está no repositório. O modo `--classic` preserva exatamente esse comportamento.
-
----
-
-## Licença
-
-MIT — faça o que quiser, só não destrua dimensões alternativas no processo.
+MIT — do whatever you want, just don't destroy any alternate dimensions in the process.
 
 ---
 

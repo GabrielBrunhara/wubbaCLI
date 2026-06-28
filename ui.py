@@ -7,7 +7,7 @@ from typing import Callable, List, Optional, Set, Tuple
 import readchar as _rc
 from rich.align import Align
 from rich.columns import Columns
-from rich.console import Console
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.rule import Rule
@@ -20,8 +20,8 @@ from settings import settings
 console = Console()
 
 # ── Opacity cycle for ASCII art ───────────────────────────────────────────────
-OPACITY_CYCLE = ["dim", "normal", "bold"]
-OPACITY_LABEL = {"dim": "50%", "normal": "75%", "bold": "100%"}
+OPACITY_CYCLE = ["dim", "bold"]
+OPACITY_LABEL = {"dim": "50%", "bold": "100%"}
 OPACITY_STYLE = {
     "dim":    lambda c: f"dim {c}",
     "normal": lambda c: c,
@@ -110,21 +110,26 @@ def confirm(prompt: str) -> bool:
 # ── Main menu ─────────────────────────────────────────────────────────────────
 
 MENU_ITEMS = [
-    ("A", "Classic Random",      "Random character in pure ASCII glory"),
-    ("B", "Character Viewer",    "Browse any character with full details"),
-    ("C", "Guess Who",           "Identify the character from their ASCII art"),
-    ("D", "Alive or Dead",       "Is this character still breathing?"),
-    ("E", "Species Roulette",    "Guess the species of a random character"),
-    ("F", "Episode Counter",     "How many episodes did they appear in?"),
-    ("G", "Search Character",    "Find a character by name"),
-    ("H", "Random Episode",      "Explore a random episode of the show"),
-    ("J", "Favorites",           "Your bookmarked characters"),
-    ("K", "History",             "Recently viewed characters"),
-    ("L", "Export ASCII",        "Save ASCII art to TXT or HTML"),
-    ("M", "Settings",            "Configure appearance and behavior"),
-    ("N", "Matrix Mode",         "Enter the Matrix… then meet a character"),
-    ("O", "Surprise Me",         "Let the universe decide"),
-    ("X", "Exit",                "Wubba lubba dub dub"),
+    ("C", "Character",        "Browse any character with full details"),
+    ("B", "Search",           "Find a character by name"),
+    # ("R", "Random",           "Random character — quick ASCII reveal"),
+    ("E", "Episode",          "Explore a random episode of the show"),
+    ("M", "Matrix Reveal",    "ASCII art emerges from the matrix rain"),
+    ("G", "Games",            "Mini-games and trivia"),
+    ("F", "Favorites",        "Your bookmarked characters"),
+    ("H", "History",          "Recently viewed characters"),
+    ("S", "Settings",         "Configure appearance and behavior"),
+    ("Q", "Quit",             "Wubba lubba dub dub"),
+]
+
+GAMES_MENU_ITEMS = [
+    ("G", "Guess Who",        "Identify the character from their ASCII art"),
+    ("A", "Alive or Dead",    "Is this character still breathing?"),
+    ("S", "Species Roulette", "Guess the species of a random character"),
+    ("E", "Episode Counter",  "How many episodes did they appear in?"),
+    ("R", "Random Game",      "Let the universe decide"),
+    ("P", "Scores",           "View your game scores"),
+    ("Q", "Back",             ""),
 ]
 
 
@@ -133,11 +138,9 @@ def show_menu() -> str:
     color = _theme()
     console.print()
 
-    # Header
-    from pyfiglet import Figlet
-    fig = Figlet(font="slant")
-    header = fig.renderText("RICK TERMINAL")
-    console.print(f"[bold {color}]{header}[/bold {color}]", justify="center")
+    from effects import get_title_art
+    from rich.text import Text as _Text
+    console.print(_Text(get_title_art(), style=f"bold {color}"), justify="center")
 
     # Build the menu table
     t = Table.grid(padding=(0, 3))
@@ -151,7 +154,7 @@ def show_menu() -> str:
     console.print(
         Panel(
             Align.center(t),
-            title=f"[bold {color}]  ⚡  MAIN MENU  ⚡  [/bold {color}]",
+            title=f"[bold {color}]   MAIN MENU   [/bold {color}]",
             subtitle=f"[dim {color}]Type a letter and press Enter[/dim {color}]",
             border_style=color,
             padding=(1, 4),
@@ -163,6 +166,76 @@ def show_menu() -> str:
     console.print(f"  [bold {color}]▶[/bold {color}] ", end="")
     console.file.flush()
     return getch(valid)
+
+
+def show_games_menu() -> str:
+    """Render the games submenu and return the user's choice."""
+    color = _theme()
+    console.print()
+
+    t = Table.grid(padding=(0, 3))
+    t.add_column(style=f"bold {color}", width=4, justify="right")
+    t.add_column(style="bold white", width=20)
+    t.add_column(style="dim white")
+
+    for key, name, desc in GAMES_MENU_ITEMS:
+        t.add_row(f"[{color}]{key}[/{color}]", name, desc)
+
+    console.print(
+        Panel(
+            Align.center(t),
+            title=f"[bold {color}]  GAMES & TRIVIA  [/bold {color}]",
+            border_style=color,
+            padding=(1, 4),
+        )
+    )
+    console.print()
+
+    valid = {item[0] for item in GAMES_MENU_ITEMS}
+    console.print(f"  [bold {color}]▶[/bold {color}] ", end="")
+    console.file.flush()
+    return getch(valid)
+
+
+def show_game_screen(
+    art: str,
+    title: str,
+    subtitle: str,
+    info_rows: List[Tuple[str, str]],
+    options: List[str],
+    prompt: str = "Your answer",
+) -> int:
+    """ASCII art (left) + game info and choices (right). Returns 0-based chosen index."""
+    color = _theme()
+    letters = "ABCD"
+
+    ascii_text = Text(art, style=f"bold {color}", overflow="fold", no_wrap=True)
+    ascii_panel = Panel(ascii_text, border_style=color, padding=(0, 1))
+
+    info_t = _info_table(info_rows, color)
+
+    opts_t = Table.grid(padding=(0, 2))
+    opts_t.add_column(style=f"bold {color}", width=4, justify="right")
+    opts_t.add_column(style="bold white")
+    for i, opt in enumerate(options):
+        opts_t.add_row(f"[{color}]{letters[i]}[/{color}]", opt)
+
+    right_panel = Panel(
+        Group(info_t, Text(""), opts_t),
+        title=f"[bold {color}]{title}[/bold {color}]",
+        subtitle=f"[dim {color}]{subtitle}[/dim {color}]",
+        border_style=color,
+        padding=(1, 2),
+    )
+
+    console.print()
+    console.print(Columns([ascii_panel, right_panel], equal=False, expand=True))
+    console.print()
+
+    valid = set(letters[: len(options)])
+    console.print(f"  [bold {color}]{prompt}[/bold {color}] ", end="")
+    console.file.flush()
+    return letters.index(getch(valid))
 
 
 # ── Character display ─────────────────────────────────────────────────────────
@@ -270,7 +343,6 @@ def show_episode(episode: Episode, characters: List[Character]) -> None:
             show_header=True,
             header_style=f"bold {color}",
             border_style=f"dim {color}",
-            row_styles=["", f"dim"],
         )
         t.add_column("#", style="dim", width=4)
         t.add_column("Name", style="bold white")
@@ -451,10 +523,12 @@ def show_settings(current: "settings") -> str:
 
     options = [
         ("W", "ASCII Width",      str(current.width)),
+        ("A", "Auto Width",       "ON" if current.auto_width else "OFF"),
         ("C", "Charset",          current.charset_name),
         ("T", "Color Theme",      current.color_theme_name),
         ("F", "Figlet Font",      current.figlet_font),
         ("E", "Effects",          "ON" if current.effects_enabled else "OFF"),
+        ("B", "Boot Style",       current.boot_style.capitalize()),
         ("S", "Typing Speed",     str(current.typing_speed)),
         ("R", "Reset Defaults",   ""),
         ("X", "Clear Cache",      ""),
@@ -480,7 +554,7 @@ def show_settings(current: "settings") -> str:
     console.print()
     console.print(f"  [bold {color}]▶[/bold {color}] ", end="")
     console.file.flush()
-    return getch({"W", "C", "T", "F", "E", "S", "R", "X", "Q"})
+    return getch({"W", "A", "C", "T", "F", "E", "B", "S", "R", "X", "Q"})
 
 
 # ── Export prompt ─────────────────────────────────────────────────────────────
